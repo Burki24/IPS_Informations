@@ -1,0 +1,30 @@
+{
+    "elements": [
+        {
+            "type": "Label",
+            "label": "IPS_Informations v2.0"
+        },
+        {
+            "type": "IntervalBox",
+            "name": "Intervall",
+            "caption": "Aktualisierungsintervall"
+        },
+        {
+            "type": "CheckBox",
+            "name": "wanipv4",
+            "caption": "WAN IPv4-Adresse ermitteln"
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "SubscriptionAblaufdatum",
+            "caption": "Subscription-Ablaufdatum (TT.MM.JJJJ)"
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "label": "Aktualisieren",
+            "onClick": "IPSInfo_Update($id);"
+        }
+    ]
+}

@@ -1,0 +1,15 @@
+{
+    "id": "{F5B07122-C3C3-4242-9D78-5630AA889D32}",
+    "name": "IPSInfo",
+    "type": 0,
+    "vendor": "Bayaro",
+    "aliases": [
+        "IPSInformations",
+        "IPS_Informations"
+    ],
+    "url": "https://github.com/kneisi13/IPS_Informations",
+    "parentRequirements": [],
+    "childRequirements": [],
+    "implemented": [],
+    "prefix": "IPSInfo"
+}
