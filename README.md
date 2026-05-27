@@ -18,14 +18,24 @@ Dieses Repository ist eine modernisierte Neuimplementierung des alten Moduls `IP
 
 ## Systemanforderungen
 
-- IP-Symcon ab Version 8.1
+- IP-Symcon ab Version 9.0
+
+## Versionierung
+
+`library.json` wird ueber `.github/scripts/update-library-metadata.php` aktualisiert. Der GitHub Workflow `.github/workflows/update-library-metadata.yml` setzt `build` automatisch auf die Git-Commit-Anzahl und aktualisiert `date`.
+
+Die Version kann bei Bedarf lokal gesetzt werden:
+
+```bash
+php .github/scripts/update-library-metadata.php --version=2.1 --next-build
+```
 
 ## Installation
 
 In der Kern-Instanz `Module Control` dieses Repository hinzufügen:
 
 ```text
-https://github.com/kneisi13/IPS_Informations.git
+https://github.com/Burki24/IPS_Informations.git
 ```
 
 Die Instanz befindet sich anschließend unter den Kern-Instanzen.

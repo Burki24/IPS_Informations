@@ -2,8 +2,11 @@
     "id": "{A5B24049-64B1-4DF8-B1DC-BAD0F6464D76}",
     "author": "Bayaro / maintained fork",
     "name": "IPS_Informations",
-    "url": "https://github.com/kneisi13/IPS_Informations",
+    "url": "https://github.com/Burki24/IPS_Informations",
+    "compatibility": {
+        "version": "9.0"
+    },
     "version": "2.0",
-    "build": 0,
-    "date": 0
+    "build": 3,
+    "date": 1779912976
 }
