@@ -15,9 +15,24 @@
             "caption": "WAN IPv4-Adresse ermitteln"
         },
         {
-            "type": "ValidationTextBox",
-            "name": "SubscriptionAblaufdatum",
-            "caption": "Subscription-Ablaufdatum (TT.MM.JJJJ)"
+            "type": "ExpansionPanel",
+            "caption": "Subscription",
+            "items": [
+                {
+                    "type": "Label",
+                    "label": "Die Subscription wird automatisch ermittelt. Zugangsdaten werden nur als Fallback verwendet, wenn lokal kein Ablaufdatum gefunden wird."
+                },
+                {
+                    "name": "SymconAccountUser",
+                    "type": "ValidationTextBox",
+                    "caption": "Benutzername"
+                },
+                {
+                    "name": "SymconAccountPassword",
+                    "type": "PasswordTextBox",
+                    "caption": "Passwort"
+                }
+            ]
         }
     ],
     "actions": [
