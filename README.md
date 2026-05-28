@@ -59,11 +59,3 @@ Kompatibilitätsfunktion für alte Skripte:
 ```php
 $result = IPSInfo_Get_WAN_IPv4($InstanzID);
 ```
-
-## Hinweise zum alten Modul
-
-Dieses Modul verwendet eigene neue GUIDs und kann dadurch unabhängig vom alten Modul installiert werden.
-
-Bestehende Instanzen des alten Moduls werden dadurch nicht automatisch übernommen. Skripte können weiter die neuen Instanzfunktionen mit dem Prefix `IPSInfo` nutzen, wenn sie auf die neue Instanz-ID zeigen.
-
-Das Subscription-Ablaufdatum wird automatisch ermittelt. Zuerst werden lokale Lizenzdaten geprüft. Wenn dort kein Ablaufdatum gefunden wird, können in der Instanzkonfiguration Symcon-Zugangsdaten als Fallback hinterlegt werden.
