@@ -14,18 +14,28 @@ Dieses Repository ist eine modernisierte Neuimplementierung des alten Moduls `IP
 - Archivstatistik: geloggte Variablen und geloggte Werte
 - Letzter IP-Symcon Startzeitpunkt
 - Optional: WAN IPv4-Adresse
-- Optional: manuell eingetragenes Subscription-Ablaufdatum
+- Automatische Ermittlung des Subscription-Ablaufdatums
 
 ## Systemanforderungen
 
-- IP-Symcon ab Version 8.1
+- IP-Symcon ab Version 9.0
+
+## Versionierung
+
+`library.json` wird ueber `.github/scripts/update-library-metadata.php` aktualisiert. Der GitHub Workflow `.github/workflows/update-library-metadata.yml` setzt `build` automatisch auf die Git-Commit-Anzahl und aktualisiert `date`.
+
+Die Version kann bei Bedarf lokal gesetzt werden:
+
+```bash
+php .github/scripts/update-library-metadata.php --version=2.1 --next-build
+```
 
 ## Installation
 
 In der Kern-Instanz `Module Control` dieses Repository hinzufügen:
 
 ```text
-https://github.com/kneisi13/IPS_Informations.git
+https://github.com/Burki24/IPS_Informations.git
 ```
 
 Die Instanz befindet sich anschließend unter den Kern-Instanzen.
@@ -56,4 +66,4 @@ Dieses Modul verwendet eigene neue GUIDs und kann dadurch unabhängig vom alten 
 
 Bestehende Instanzen des alten Moduls werden dadurch nicht automatisch übernommen. Skripte können weiter die neuen Instanzfunktionen mit dem Prefix `IPSInfo` nutzen, wenn sie auf die neue Instanz-ID zeigen.
 
-Das alte Forum-Login-Scraping wurde nicht übernommen. Das Subscription-Ablaufdatum kann in der Instanzkonfiguration im Format `TT.MM.JJJJ` eingetragen werden.
+Das Subscription-Ablaufdatum wird automatisch ermittelt. Zuerst werden lokale Lizenzdaten geprüft. Wenn dort kein Ablaufdatum gefunden wird, können in der Instanzkonfiguration Symcon-Zugangsdaten als Fallback hinterlegt werden.

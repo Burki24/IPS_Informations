@@ -37,7 +37,8 @@ class IPSInfo extends IPSModuleStrict
 
         $this->RegisterPropertyInteger('Intervall', 3600);
         $this->RegisterPropertyBoolean('wanipv4', false);
-        $this->RegisterPropertyString('SubscriptionAblaufdatum', '');
+        $this->RegisterPropertyString('SymconAccountUser', '');
+        $this->RegisterPropertyString('SymconAccountPassword', '');
 
         $this->RegisterTimer('ReadSysInfo', 0, 'IPSInfo_Update($_IPS[\'TARGET\']);');
     }
@@ -93,6 +94,17 @@ class IPSInfo extends IPSModuleStrict
     public function Get_WAN_IPv4(): string|false
     {
         return $this->GetWANIPv4();
+    }
+
+    public function GetSubscriptionExpiration(): int|false
+    {
+        $timestamp = $this->detectSubscriptionExpiration();
+        if ($timestamp === null) {
+            return false;
+        }
+
+        $this->writeValue('SubscriptionAblaufVAR', $timestamp);
+        return $timestamp;
     }
 
     private function registerVariables(): void
@@ -202,18 +214,128 @@ class IPSInfo extends IPSModuleStrict
 
     private function refreshSubscriptionState(): void
     {
-        $configuredDate = trim($this->ReadPropertyString('SubscriptionAblaufdatum'));
-        if ($configuredDate === '') {
-            return;
-        }
-
-        $timestamp = $this->parseGermanDate($configuredDate);
+        $timestamp = $this->detectSubscriptionExpiration();
         if ($timestamp === null) {
-            $this->SendDebug(__FUNCTION__, 'Bitte das Subscription-Datum im Format TT.MM.JJJJ eintragen.', 0);
+            $this->SendDebug(__FUNCTION__, 'Subscription-Ablaufdatum konnte nicht automatisch ermittelt werden.', 0);
             return;
         }
 
         $this->writeValue('SubscriptionAblaufVAR', $timestamp);
+    }
+
+    private function detectSubscriptionExpiration(): ?int
+    {
+        return $this->readSubscriptionExpirationFromLocalFiles()
+            ?? $this->readSubscriptionExpirationFromSymconAccount();
+    }
+
+    private function readSubscriptionExpirationFromLocalFiles(): ?int
+    {
+        $candidates = array_merge(
+            glob(IPS_GetKernelDir() . '*license*') ?: [],
+            glob(IPS_GetKernelDir() . '*License*') ?: []
+        );
+
+        foreach (array_unique($candidates) as $path) {
+            if (!is_file($path) || filesize($path) > 1048576) {
+                continue;
+            }
+
+            $content = @file_get_contents($path);
+            if (!is_string($content)) {
+                continue;
+            }
+
+            $timestamp = $this->extractSubscriptionExpiration($content);
+            if ($timestamp !== null) {
+                return $timestamp;
+            }
+        }
+
+        return null;
+    }
+
+    private function readSubscriptionExpirationFromSymconAccount(): ?int
+    {
+        $username = trim($this->ReadPropertyString('SymconAccountUser'));
+        $password = $this->ReadPropertyString('SymconAccountPassword');
+
+        if ($username === '' || $password === '') {
+            return null;
+        }
+
+        $page = $this->loadSymconLicensePage($username, $password);
+        if ($page === false) {
+            return null;
+        }
+
+        return $this->extractSubscriptionExpiration($page);
+    }
+
+    private function loadSymconLicensePage(string $username, string $password): string|false
+    {
+        $cookieFile = tempnam(sys_get_temp_dir(), 'ipsinfo_');
+        if ($cookieFile === false) {
+            $this->SendDebug(__FUNCTION__, 'Cookie-Datei konnte nicht angelegt werden.', 0);
+            return false;
+        }
+
+        $curl = curl_init();
+        if ($curl === false) {
+            @unlink($cookieFile);
+            $this->SendDebug(__FUNCTION__, 'cURL konnte nicht initialisiert werden.', 0);
+            return false;
+        }
+
+        $baseUrl = 'https://www.symcon.de/forum/';
+        $commonOptions = [
+            CURLOPT_HEADER => false,
+            CURLOPT_TIMEOUT => 20,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_COOKIEFILE => $cookieFile,
+            CURLOPT_COOKIEJAR => $cookieFile,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYHOST => 2,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_USERAGENT => 'IPS_Informations/2.0',
+        ];
+
+        curl_setopt_array($curl, $commonOptions + [
+            CURLOPT_URL => $baseUrl . 'login.php?do=login',
+            CURLOPT_REFERER => $baseUrl . 'index.php',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query([
+                'vb_login_username' => $username,
+                'vb_login_password' => '',
+                's' => '',
+                'securitytoken' => 'guest',
+                'do' => 'login',
+                'vb_login_md5password' => md5($password),
+                'vb_login_md5password_utf' => md5($password),
+            ]),
+        ]);
+
+        curl_exec($curl);
+
+        curl_setopt_array($curl, [
+            CURLOPT_POST => false,
+            CURLOPT_URL => $baseUrl . 'live.php',
+            CURLOPT_REFERER => $baseUrl . 'index.php',
+        ]);
+
+        $page = curl_exec($curl);
+        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+
+        curl_close($curl);
+        @unlink($cookieFile);
+
+        if ($httpCode === 200 && is_string($page) && $page !== '') {
+            return $page;
+        }
+
+        $this->SendDebug(__FUNCTION__, 'Subscription-Seite konnte nicht geladen werden. HTTP-Code: ' . $httpCode, 0);
+        return false;
     }
 
     private function writeValue(string $ident, bool|int|float|string $value): bool
@@ -298,6 +420,37 @@ class IPSInfo extends IPSModuleStrict
 
         $shortDate = DateTimeImmutable::createFromFormat('!d.m.y', $value);
         return $shortDate instanceof DateTimeImmutable ? $shortDate->getTimestamp() : null;
+    }
+
+    private function extractSubscriptionExpiration(string $content): ?int
+    {
+        $patterns = [
+            '/(?:Subskription bis|Subscription until|valid until|gueltig bis|gültig bis)\s*:?\s*([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{2,4})/iu',
+            '/(?:subscription|subskription|license|lizenz)[^0-9]{0,80}([0-9]{1,2}\.[0-9]{1,2}\.[0-9]{2,4})/iu',
+            '/(?:subscription|subskription|license|lizenz)[^0-9]{0,80}([0-9]{4}-[0-9]{2}-[0-9]{2})/iu',
+        ];
+
+        foreach ($patterns as $pattern) {
+            if (preg_match($pattern, $content, $matches) !== 1) {
+                continue;
+            }
+
+            $timestamp = str_contains($matches[1], '-')
+                ? $this->parseIsoDate($matches[1])
+                : $this->parseGermanDate($matches[1]);
+
+            if ($timestamp !== null) {
+                return $timestamp;
+            }
+        }
+
+        return null;
+    }
+
+    private function parseIsoDate(string $value): ?int
+    {
+        $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+        return $date instanceof DateTimeImmutable ? $date->getTimestamp() : null;
     }
 
     private function ensureIntegerProfile(
