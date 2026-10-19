@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/../libs/helper/DebugFlowHelper.php';
+
 class IPSInfo extends IPSModuleStrict
 {
+    use \Burki24\SymconModuleHelper\DebugFlowHelper;
+
     private const ARCHIVE_CONTROL_MODULE_ID = '{43192F0B-135B-4CE7-A0A7-1475603F3060}';
 
     private const COUNTER_VARIABLES = [
@@ -33,78 +37,144 @@ class IPSInfo extends IPSModuleStrict
 
     public function Create(): void
     {
-        parent::Create();
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            parent::Create();
 
-        $this->RegisterPropertyInteger('Intervall', 3600);
-        $this->RegisterPropertyBoolean('wanipv4', false);
-        $this->RegisterPropertyString('SymconAccountUser', '');
-        $this->RegisterPropertyString('SymconAccountPassword', '');
+            $this->RegisterPropertyInteger('Intervall', 3600);
+            $this->RegisterPropertyBoolean('wanipv4', false);
+            $this->RegisterPropertyString('SymconAccountUser', '');
+            $this->RegisterPropertyString('SymconAccountPassword', '');
 
-        $this->RegisterTimer('ReadSysInfo', 0, 'IPSInfo_Update($_IPS[\'TARGET\']);');
+            $this->RegisterTimer('ReadSysInfo', 0, 'IPSInfo_Update($_IPS[\'TARGET\']);');
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, true);
+        }
     }
 
     public function ApplyChanges(): void
     {
-        parent::ApplyChanges();
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            parent::ApplyChanges();
 
-        $this->ensureIntegerProfile('IPSInfo.MB', ' MB', 0, 10240, 1);
-        $this->registerVariables();
+            $this->ensureIntegerProfile('IPSInfo.MB', ' MB', 0, 10240, 1);
+            $this->registerVariables();
 
-        $this->SetTimerInterval('ReadSysInfo', max(0, $this->ReadPropertyInteger('Intervall')) * 1000);
-        $this->Update();
+            $this->SetTimerInterval('ReadSysInfo', max(0, $this->ReadPropertyInteger('Intervall')) * 1000);
+            $this->Update();
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, true);
+        }
     }
 
     public function Update(): bool
     {
-        if (!$this->isKernelReady()) {
-            return false;
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            if (!$this->isKernelReady()) {
+                return $debugFlowResult = false;
+            }
+
+            $this->refreshObjectCounters();
+            $this->refreshDirectorySizes();
+            $this->refreshArchiveCounters();
+            $this->refreshLicenseState();
+            $this->refreshVersionState();
+            $this->refreshSubscriptionState();
+
+            if ($this->ReadPropertyBoolean('wanipv4')) {
+                $this->GetWANIPv4();
+            }
+
+            return $debugFlowResult = true;
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, false);
         }
-
-        $this->refreshObjectCounters();
-        $this->refreshDirectorySizes();
-        $this->refreshArchiveCounters();
-        $this->refreshLicenseState();
-        $this->refreshVersionState();
-        $this->refreshSubscriptionState();
-
-        if ($this->ReadPropertyBoolean('wanipv4')) {
-            $this->GetWANIPv4();
-        }
-
-        return true;
     }
 
     public function GetWANIPv4(): string|false
     {
-        $response = $this->loadTextFromUrl('https://api.ipify.org?format=text', 8);
-        $address = is_string($response) ? trim($response) : '';
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            $response = $this->loadTextFromUrl('https://api.ipify.org?format=text', 8);
+            $address = is_string($response) ? trim($response) : '';
 
-        if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
-            $this->SendDebug(__FUNCTION__, 'Es wurde keine gueltige WAN IPv4-Adresse empfangen.', 0);
-            return false;
+            if (filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) === false) {
+                $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Es wurde keine gueltige WAN IPv4-Adresse empfangen.');
+                return $debugFlowResult = false;
+            }
+
+            if ($this->ReadPropertyBoolean('wanipv4') && $this->hasRegisteredVariable('WAN_IPv4')) {
+                $this->writeValue('WAN_IPv4', $address);
+            }
+
+            return $debugFlowResult = $address;
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, false);
         }
-
-        if ($this->ReadPropertyBoolean('wanipv4') && $this->hasRegisteredVariable('WAN_IPv4')) {
-            $this->writeValue('WAN_IPv4', $address);
-        }
-
-        return $address;
     }
 
     public function Get_WAN_IPv4(): string|false
     {
-        return $this->GetWANIPv4();
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            return $debugFlowResult = $this->GetWANIPv4();
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, false);
+        }
     }
 
     public function GetSubscriptionExpiration(): int|false
     {
-        $timestamp = $this->detectSubscriptionExpiration();
-        if ($timestamp === null) {
-            return false;
-        }
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            $timestamp = $this->detectSubscriptionExpiration();
+            if ($timestamp === null) {
+                return $debugFlowResult = false;
+            }
 
-        $this->writeValue('SubscriptionAblaufVAR', $timestamp);
-        return $timestamp;
+            $this->writeValue('SubscriptionAblaufVAR', $timestamp);
+            return $debugFlowResult = $timestamp;
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, false);
+        }
     }
 
     private function registerVariables(): void
@@ -146,7 +216,7 @@ class IPSInfo extends IPSModuleStrict
             return true;
         }
 
-        $this->SendDebug(__FUNCTION__, 'Kernel ist noch nicht bereit. Runlevel: ' . $runlevel, 0);
+        $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'AKTION', 'Aktualisierung übersprungen: Symcon-Kernel ist noch nicht betriebsbereit.', ['Runlevel' => $runlevel]);
         return false;
     }
 
@@ -171,7 +241,7 @@ class IPSInfo extends IPSModuleStrict
         if ($archiveId === null) {
             $this->writeValue('IPSDBAnzahlGeloggterVariablen', 0);
             $this->writeValue('IPSDBAnzahlGeloggterWerteGesamt', 0);
-            $this->SendDebug(__FUNCTION__, 'Archive Control wurde nicht gefunden.', 0);
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Archive Control wurde nicht gefunden.');
             return;
         }
 
@@ -216,7 +286,7 @@ class IPSInfo extends IPSModuleStrict
     {
         $timestamp = $this->detectSubscriptionExpiration();
         if ($timestamp === null) {
-            $this->SendDebug(__FUNCTION__, 'Subscription-Ablaufdatum konnte nicht automatisch ermittelt werden.', 0);
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Subscription-Ablaufdatum konnte nicht automatisch ermittelt werden.');
             return;
         }
 
@@ -274,68 +344,82 @@ class IPSInfo extends IPSModuleStrict
 
     private function loadSymconLicensePage(string $username, string $password): string|false
     {
-        $cookieFile = tempnam(sys_get_temp_dir(), 'ipsinfo_');
-        if ($cookieFile === false) {
-            $this->SendDebug(__FUNCTION__, 'Cookie-Datei konnte nicht angelegt werden.', 0);
-            return false;
-        }
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            $cookieFile = tempnam(sys_get_temp_dir(), 'ipsinfo_');
+            if ($cookieFile === false) {
+                $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Cookie-Datei konnte nicht angelegt werden.');
+                return $debugFlowResult = false;
+            }
 
-        $curl = curl_init();
-        if ($curl === false) {
+            $curl = curl_init();
+            if ($curl === false) {
+                @unlink($cookieFile);
+                $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'cURL konnte nicht initialisiert werden.');
+                return $debugFlowResult = false;
+            }
+
+            $baseUrl = 'https://www.symcon.de/forum/';
+            $commonOptions = [
+                CURLOPT_HEADER => false,
+                CURLOPT_TIMEOUT => 20,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_COOKIEFILE => $cookieFile,
+                CURLOPT_COOKIEJAR => $cookieFile,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_SSL_VERIFYPEER => true,
+                CURLOPT_SSL_VERIFYHOST => 2,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_USERAGENT => 'IPS_Informations/2.0',
+            ];
+
+            curl_setopt_array($curl, $commonOptions + [
+                CURLOPT_URL => $baseUrl . 'login.php?do=login',
+                CURLOPT_REFERER => $baseUrl . 'index.php',
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => http_build_query([
+                    'vb_login_username' => $username,
+                    'vb_login_password' => '',
+                    's' => '',
+                    'securitytoken' => 'guest',
+                    'do' => 'login',
+                    'vb_login_md5password' => md5($password),
+                    'vb_login_md5password_utf' => md5($password),
+                ]),
+            ]);
+
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'SENDEN', 'Anmeldung am Symcon-Konto wird ausgeführt; Zugangsdaten bleiben geschützt.');
+            curl_exec($curl);
+
+            curl_setopt_array($curl, [
+                CURLOPT_POST => false,
+                CURLOPT_URL => $baseUrl . 'live.php',
+                CURLOPT_REFERER => $baseUrl . 'index.php',
+            ]);
+
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'SENDEN', 'Subscription-Seite wird über die angemeldete Sitzung abgefragt.');
+            $page = curl_exec($curl);
+            $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'EMPFANG', 'Subscription-Schnittstelle hat geantwortet; Inhalt bleibt geschützt.', ['HTTPStatus' => $httpCode, 'AntwortBytes' => is_string($page) ? strlen($page) : 0]);
+
+            curl_close($curl);
             @unlink($cookieFile);
-            $this->SendDebug(__FUNCTION__, 'cURL konnte nicht initialisiert werden.', 0);
-            return false;
+
+            if ($httpCode === 200 && is_string($page) && $page !== '') {
+                return $debugFlowResult = $page;
+            }
+
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Subscription-Seite konnte nicht geladen werden.', ['HTTPStatus' => $httpCode]);
+            return $debugFlowResult = false;
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, false);
         }
-
-        $baseUrl = 'https://www.symcon.de/forum/';
-        $commonOptions = [
-            CURLOPT_HEADER => false,
-            CURLOPT_TIMEOUT => 20,
-            CURLOPT_CONNECTTIMEOUT => 10,
-            CURLOPT_COOKIEFILE => $cookieFile,
-            CURLOPT_COOKIEJAR => $cookieFile,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_SSL_VERIFYPEER => true,
-            CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_USERAGENT => 'IPS_Informations/2.0',
-        ];
-
-        curl_setopt_array($curl, $commonOptions + [
-            CURLOPT_URL => $baseUrl . 'login.php?do=login',
-            CURLOPT_REFERER => $baseUrl . 'index.php',
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query([
-                'vb_login_username' => $username,
-                'vb_login_password' => '',
-                's' => '',
-                'securitytoken' => 'guest',
-                'do' => 'login',
-                'vb_login_md5password' => md5($password),
-                'vb_login_md5password_utf' => md5($password),
-            ]),
-        ]);
-
-        curl_exec($curl);
-
-        curl_setopt_array($curl, [
-            CURLOPT_POST => false,
-            CURLOPT_URL => $baseUrl . 'live.php',
-            CURLOPT_REFERER => $baseUrl . 'index.php',
-        ]);
-
-        $page = curl_exec($curl);
-        $httpCode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-
-        curl_close($curl);
-        @unlink($cookieFile);
-
-        if ($httpCode === 200 && is_string($page) && $page !== '') {
-            return $page;
-        }
-
-        $this->SendDebug(__FUNCTION__, 'Subscription-Seite konnte nicht geladen werden. HTTP-Code: ' . $httpCode, 0);
-        return false;
     }
 
     private function writeValue(string $ident, bool|int|float|string $value): bool
@@ -344,7 +428,7 @@ class IPSInfo extends IPSModuleStrict
             return false;
         }
 
-        $this->SetValue($ident, $value);
+        $this->DebugFlowWriteValue($ident, $value, __FUNCTION__, __LINE__, !in_array($ident, ['WAN_IPv4', 'IPSLizenzBenutzer', 'IPSLizenz'], true));
         return true;
     }
 
@@ -371,7 +455,7 @@ class IPSInfo extends IPSModuleStrict
     private function calculateDirectoryMegabytes(string $directory): int
     {
         if (!is_dir($directory)) {
-            $this->SendDebug(__FUNCTION__, 'Verzeichnis nicht gefunden: ' . $directory, 0);
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Ein benötigtes Systemverzeichnis fehlt; Größenwert wird als null gemeldet.');
             return 0;
         }
 
@@ -391,15 +475,29 @@ class IPSInfo extends IPSModuleStrict
 
     private function loadTextFromUrl(string $url, int $timeoutSeconds): string|false
     {
-        $context = stream_context_create([
-            'http' => [
-                'method' => 'GET',
-                'timeout' => $timeoutSeconds,
-                'header' => "User-Agent: IPS_Informations\r\n",
-            ],
-        ]);
+        $debugFlowResult = null;
+        $debugFlowFailed = false;
+        $this->DebugFlowStart(__FUNCTION__, __LINE__);
+        try {
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'SENDEN', 'HTTP-Leseanfrage wird vorbereitet; Zieladresse und Inhalt bleiben geschützt.', ['ZeitlimitSekunden' => $timeoutSeconds]);
+            $context = stream_context_create([
+                'http' => [
+                    'method' => 'GET',
+                    'timeout' => $timeoutSeconds,
+                    'header' => "User-Agent: IPS_Informations\r\n",
+                ],
+            ]);
 
-        return @file_get_contents($url, false, $context);
+            $response = @file_get_contents($url, false, $context);
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, $response === false ? 'FEHLER' : 'EMPFANG', $response === false ? 'HTTP-Leseanfrage fehlgeschlagen.' : 'HTTP-Leseanfrage beantwortet; Inhalt geschützt.', ['AntwortBytes' => is_string($response) ? strlen($response) : 0]);
+            return $debugFlowResult = $response;
+        } catch (\Throwable $debugFlowException) {
+            $debugFlowFailed = true;
+            $this->DebugFlowException(__FUNCTION__, __LINE__, $debugFlowException);
+            throw $debugFlowException;
+        } finally {
+            $this->DebugFlowEnd(__FUNCTION__, __LINE__, $debugFlowResult, $debugFlowFailed, false);
+        }
     }
 
     private function extractBuildNumber(string $liveUpdateVersion): string
@@ -466,7 +564,7 @@ class IPSInfo extends IPSModuleStrict
 
         $profile = IPS_GetVariableProfile($name);
         if ($profile['ProfileType'] !== 1) {
-            $this->SendDebug(__FUNCTION__, 'Variablenprofil hat einen unpassenden Typ: ' . $name, 0);
+            $this->DebugFlowEvent(__FUNCTION__, __LINE__, 'FEHLER', 'Das Variablenprofil besitzt einen unpassenden Typ; Anpassung übersprungen.', ['Profil' => $name]);
             return;
         }
 

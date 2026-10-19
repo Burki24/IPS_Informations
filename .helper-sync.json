@@ -1,0 +1,10 @@
+{
+    "schema": 1,
+    "source_repository": "Burki24/Symcon_ModuleHelper",
+    "readme_language": "de",
+    "helpers": {
+        "DebugFlowHelper": {
+            "target": "libs/helper/DebugFlowHelper.php"
+        }
+    }
+}
