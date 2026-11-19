@@ -1,5 +1,7 @@
 # IPS_Informations
 
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](#spenden)
+
 IP-Symcon Modul zum Auslesen zentraler Systeminformationen.
 
 Dieses Repository ist eine modernisierte Neuimplementierung des alten Moduls `IPSInformations` auf Basis von `IPSModuleStrict`.
@@ -59,3 +61,9 @@ Kompatibilitätsfunktion für alte Skripte:
 ```php
 $result = IPSInfo_Get_WAN_IPv4($InstanzID);
 ```
+
+## Spenden
+
+Mit einer freiwilligen Spende kannst du die Weiterentwicklung dieses Projekts unterstützen.
+
+[![PayPal.Me](https://img.shields.io/badge/PayPal-Me-lightblue.svg)](https://www.paypal.me/BurkhardKneiseler)
